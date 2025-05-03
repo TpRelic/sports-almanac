@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Sports Almanac</title>
         <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     </head>
     <body>
         <nav class="navbar">
@@ -34,7 +35,21 @@
                 <p class="hero__description">Search for any NBA Player</p>
             </div>
         </div>
-
+        <div class="search">
+            <form class="search__form" id="playerSearchForm">
+                <input type="text" placeholder="Search Players" name="search" id="playerInput" required>
+                <button type="submit">
+                    <i class="fa fa-search"></i>
+                </button>
+            </form>
+        </div>
+        <div id="result"></div>
+        <div class="insight">
+            <form action="#" class="insight__form">
+                <textarea id="outputBox" placeholder="AI Insight..." disabled></textarea>
+                <button type="button" id="changeTextButton">Generate Insight</button>
+            </form>
+        </div>
         <script src="apps.js"></script>
     </body>
 </html>
