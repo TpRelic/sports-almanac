@@ -223,6 +223,17 @@
     background-color: #fff;
 }
 
+#searchType {
+    background: #fff;
+    margin-right: 10px;
+    font-size: 17px;
+    border-radius: 4px;
+}
+
+option {
+    background: #fff;
+}
+
 #result {
     margin: 0px;
 }
@@ -247,6 +258,8 @@ table {
 
 th {
     border: 1px solid #ca1734;
+    padding-left: 7px;
+    padding-right: 7px;
     text-align: center;
     border-collapse: collapse;
     background: #a7a8aa;

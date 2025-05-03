@@ -48,12 +48,15 @@ document.addEventListener('DOMContentLoaded', function () {
       teamForm.addEventListener('submit', function (e) {
         e.preventDefault();
   
+        const searchType = document.getElementById('searchType').value;
         const teamName = document.getElementById('teamInput').value;
+
+        console.log("Sending:", { team: teamName, type: searchType });
   
         fetch('/search-team', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ team: teamName })
+          body: JSON.stringify({ team: teamName, type: searchType })
         })
           .then(res => res.json())
           .then(data => {
