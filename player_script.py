@@ -1,7 +1,10 @@
 import sys
+import io
 from nba_api.stats.endpoints import playercareerstats
 from nba_api.stats.endpoints import commonplayerinfo
 from nba_api.stats.static import players
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 player = sys.argv[1]
 mode = sys.argv[2]
