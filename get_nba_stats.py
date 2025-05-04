@@ -40,7 +40,7 @@ class GameFinder:
             
             if not game.empty:
                 # Return game ID as string
-                return str(game.iloc[0]['gameId'])
+                return str("00" + str(game.iloc[0]['gameId']))
             else:
                 return "Game not found"
                 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     print("Testing game finder...")
     
     # Example 1: Find specific game
-    game_id = finder.find_game_id('2025-01-01', 'Celtics', 'Nuggets')
+    game_id = finder.find_game_id('2024-05-15', 'Thunder', 'Mavericks')
     print(f"Found game ID: {game_id}")
     
     # Example 2: Get all games for a date

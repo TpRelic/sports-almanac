@@ -1,71 +1,89 @@
+#!/usr/bin/env python3
 import os
-import google.generativeai as genai
+import sys
+from openai import OpenAI
+import check_api_key
 
-import check_api_key    # to get the env GEMINI_API_KEY
-import example_prompts  # essentially does makes the 'history' to be fed into the model.start_chat's history.
-import get_nba_stats    # contains function to ftches player stats for a game on the specified date and team
+# Initialize OpenAI client
+OPENAI_API_KEY = check_api_key.get_openai_key()
+if OPENAI_API_KEY is None:
+    print("Error: OpenAI API key not found")
+    sys.exit(1)
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-api_key = check_api_key.get_key()
-if api_key is None:
-    print("Error: Gemini API key not found. Please set it in your environment variables or .env file.")
-    exit()
-genai.configure(api_key = api_key)
+def get_ai_response(user_input: str) -> str:
+    """Get AI response with web search capability."""
+    try:
+        # Create the input structure
+        input_data = [
+            {
+                "role": "system",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": "You are an AI assistant that helps analyze NBA games and stats. For YouTube URLs, extract and provide game details in this format:\nDate: MM/DD/YYYY\nTeam A: \nTeam B:"
+                    }
+                ]
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": user_input
+                    }
+                ]
+            }
+        ]
 
-# get / change stats for the game here
-# convert the dataframes to strings
-player_stats, team_stats = get_nba_stats.get_game_stats('CHA', 'NOP', "03/30/2025")
-player_stats_str = player_stats.to_string()
-team_stats_str = team_stats.to_string()
+        # Call OpenAI API
+        response = client.responses.create(
+            model="gpt-4o-mini",
+            input=input_data,
+            text={"format": {"type": "text"}},
+            reasoning={},
+            tools=[
+                {
+                    "type": "web_search_preview",
+                    "user_location": {"type": "approximate"},
+                    "search_context_size": "medium"
+                }
+            ],
+            temperature=1,
+            max_output_tokens=128,
+            top_p=1,
+            store=True
+        )
 
-# create the model
-generation_config = {
-    "temperature": 0.25,
-    "top_p": 0.95,
-    "top_k": 40,
-    "max_output_tokens": 1024,
-    "response_mime_type": "text/plain"
-}
+        # Extract content from response
+        if hasattr(response, 'output') and response.output:
+            for message in response.output:
+                if hasattr(message, 'content'):
+                    for content in message.content:
+                        if content.type == 'output_text':
+                            return content.text.strip()
+        return "I couldn't process that request. Please try again."
 
-prompting = f"""### Instructions
-    You are an AI assistant that helps summarize and analyze the provided game facts, stats, and data in an accessible manner.
+    except Exception as e:
+        return f"Error: {str(e)}"
 
-    ### Example
-    Here are the player stats:
-    {player_stats_str}
-
-    Here are the team stats:
-    {team_stats_str}
-
-    ### Continue the responces below.
-"""
-
-# print(prompting)
-
-model = genai.GenerativeModel(
-    model_name="gemini-2.0-flash",
-    generation_config = generation_config,
-    
-    system_instruction = prompting
-)
-
-# from example_prompts.py
-chat_session = model.start_chat(
-    history = example_prompts.history
-)
-
-def main():
-    print("Executed as main, send test message to Gemini about a given game (default 'CHA', 'NOP', \"03/30/2025\")")
-    while True:
-        user_input = input("Enter a msg for Gemini (or exit): ")
-        if user_input.lower() == 'exit':
-            print("ok bye bye")
-            break
-        if not user_input.strip(): # Check if the input is empty or contains only whitespace
-            response = chat_session.send_message(content= "?") # fallback message
-            print(response.text)
-        else:
-            response = chat_session.send_message(content=user_input)
-            print(response.text)
+def format_response(text: str) -> str:
+    """Format the response text for better readability."""
+    formatted = "\n" + "─" * 80 + "\n\n"  # Wider separator
+    formatted += text
+    formatted += "\n\n" + "─" * 80 + "\n"
+    return formatted
 
 if __name__ == "__main__":
-    main()
+    print("\nNBA Insights AI")
+    print("Ask me anything about NBA games and stats!\n")
+    
+    user_input = input("Your question: ")
+    print("\nSearching...")
+    
+    # Get the response from OpenAI
+    response_text = get_ai_response(user_input)
+    formatted_response = format_response(response_text)
+    
+    # Print the formatted response
+    print(formatted_response)
