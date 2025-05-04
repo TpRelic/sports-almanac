@@ -6,6 +6,23 @@ import pandas as pd
 from nba_api.live.nba.endpoints import playbyplay, boxscore
 from plotly import subplots as sp
 from collections import defaultdict
+from get_nba_stats import GameFinder
+from ask_ai import get_ai_response
+
+# Initialize session state
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
+if 'game_finder' not in st.session_state:
+    st.session_state.game_finder = GameFinder()
+if 'current_play' not in st.session_state:
+    st.session_state.current_play = None
+if 'player_stats' not in st.session_state:
+    st.session_state.player_stats = {}
+if 'scores' not in st.session_state:
+    st.session_state.scores = {}
+
+def clear_chat():
+    st.session_state.chat_history = []
 
 def analyze_scoring_play(action):
     """Analyzes if a play resulted in points and how many."""
@@ -129,13 +146,100 @@ def create_player_performance_charts(player_stats, away_code, home_code):
 st.set_page_config(page_title="NBA Live Play‑by‑Play", layout="wide")
 st.title("🏀 NBA Live Play‑by‑Play Animation")
 
-# Sidebar controls
+# Sidebar controls with Game Finder integration
 st.sidebar.header("Game Configuration")
-game_id = st.sidebar.text_input("Game ID", value="0022000196")
-animate = st.sidebar.button("Start Animation")
-speed = st.sidebar.slider("Animation Speed (seconds)", 0.1, 2.0, 0.8)
 
-if animate:
+# Date selector
+date = st.sidebar.date_input("Select Date", value=pd.to_datetime('2025-01-01'))
+date_str = date.strftime('%Y-%m-%d')
+
+# Get available games for selected date
+games = st.session_state.game_finder.get_available_games(date_str)
+if games:
+    game_options = list(games.keys())
+    selected_game = st.sidebar.selectbox("Select Game", options=game_options)
+    game_id = f"00{games[selected_game]}" if selected_game else None
+else:
+    st.sidebar.error("No games found for selected date")
+    game_id = None
+
+# Animation controls
+animate = st.sidebar.button("Start Animation")
+speed = st.sidebar.slider("Animation Speed (seconds)", 0.05, 2.0, 0.05)
+
+# Add chat interface in sidebar
+chat_container = st.sidebar.container()
+with chat_container:
+    st.markdown("---")
+    st.header("Game Analysis Chat")
+    
+    with st.form(key='chat_form', clear_on_submit=True):
+        chat_input = st.text_input("Ask about the game:", 
+                                  placeholder="e.g., Who scored the most points?")
+        col1, col2 = st.columns([1,1])
+        with col1:
+            submit_chat = st.form_submit_button("Ask AI")
+        with col2:
+            clear_chat = st.form_submit_button("Clear", on_click=clear_chat)
+        
+        if submit_chat and chat_input:
+            try:
+                # Initialize variables
+                play_history = []
+                
+                # Access data from session state
+                plays = st.session_state.get('plays', [])
+                player_team_map = st.session_state.get('player_team_map', {})
+                away_players = st.session_state.get('away_players', [])
+                home_players = st.session_state.get('home_players', [])
+                player_stats = st.session_state.get('player_stats', {})
+                play_line = st.session_state.get('current_play', "")
+                
+                # Create game context
+                game_context = {
+                    'game_id': game_id,
+                    'scores': st.session_state.scores,
+                    'current_play': play_line,
+                    'player_stats': player_stats,
+                    'play_by_play': []  # Initialize empty list for play history
+                }
+                
+                # Add play-by-play history to context if available
+                if plays:
+                    for p in plays:
+                        pid = str(p.get('personId', ''))
+                        team = player_team_map.get(pid, '')
+                        name = next(
+                            (player.get('name', 'Unknown') 
+                             for player in (away_players + home_players) 
+                             if str(player.get('personId', '')) == pid),
+                            'Unknown'
+                        )
+                        play_history.append(format_play(p, name, team))
+                    game_context['play_by_play'] = play_history[-10:]
+                
+                # Get AI response
+                with st.spinner("Thinking..."):
+                    response = get_ai_response(chat_input, game_context)
+                    st.session_state.chat_history.append(("user", chat_input))
+                    st.session_state.chat_history.append(("ai", response))
+                    
+            except Exception as e:
+                st.error(f"Error processing request: {str(e)}")
+
+    # Display chat history in scrollable container
+    with st.container():
+        for role, message in reversed(st.session_state.chat_history):
+            st.markdown(
+                f"""<div style='border-left: 3px solid {"#0066cc" if role == "ai" else "#666666"}; 
+                padding-left: 10px; margin: 10px 0;'>
+                <p><strong>{'AI' if role == 'ai' else 'You'}:</strong> {message}</p>
+                </div>""", 
+                unsafe_allow_html=True
+            )
+
+# Main game animation section
+if animate and game_id:
     try:
         # Fetch game data
         bs = boxscore.BoxScore(game_id)

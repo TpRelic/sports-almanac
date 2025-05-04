@@ -1,20 +1,25 @@
 import os
 from dotenv import load_dotenv
 
+load_dotenv()
+
 def get_key():
-    """
-    trys returning the Gemini API key from environment variables or .env file
-    otherwise returns None.
-    """
-    
-    load_dotenv()
-    api_key = os.environ.get("GEMINI_API_KEY")
-    return api_key
+    return os.getenv('GEMINI_API_KEY')
+
+def get_openai_key():
+    return os.getenv('OPENAI_API_KEY')
 
 # Example usage:
 if __name__ == "__main__":
-    api_key = get_key()
-    if api_key:
-        print(f"Gemini API key found: {api_key[:5]}...")
+    gemini_api_key = get_key()
+    openai_api_key = get_openai_key()
+    
+    if gemini_api_key:
+        print(f"Gemini API key found: {gemini_api_key[:5]}...")
     else:
         print("Error: Gemini API key not found. Please set it in your environment variables or .env file.")
+    
+    if openai_api_key:
+        print(f"OpenAI API key found: {openai_api_key[:5]}...")
+    else:
+        print("Error: OpenAI API key not found. Please set it in your environment variables or .env file.")
