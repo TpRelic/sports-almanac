@@ -4,6 +4,7 @@ from nba_api.stats.endpoints import commonplayerinfo
 from nba_api.stats.static import players
 
 player = sys.argv[1]
+mode = sys.argv[2]
 player_info = players.find_players_by_full_name(player)
 
 if len(player_info) != 1:
@@ -17,19 +18,15 @@ common_info = commonplayerinfo.CommonPlayerInfo(player_id=id)
 df_common_info = common_info.get_data_frames()[0]
 df_common_info = df_common_info.rename(columns={'DISPLAY_FIRST_LAST': 'NAME'})
 
-career_stats = playercareerstats.PlayerCareerStats(player_id=id) 
+career_stats = playercareerstats.PlayerCareerStats(player_id=id, per_mode36=mode) 
 
 df_career_stats = career_stats.get_data_frames()[0]
 df_career_stats = df_career_stats.fillna('')
-df_career_stats = df_career_stats.rename(columns={'TEAM_ABBREVIATION': 'TEAM'})
-df_career_stats = df_career_stats.rename(columns={'PLAYER_AGE': 'AGE'})
-df_career_stats = df_career_stats.rename(columns={'SEASON_ID': 'SEASON'})
+df_career_stats = df_career_stats.rename(columns={'TEAM_ABBREVIATION': 'TEAM', 'PLAYER_AGE': 'AGE', 'SEASON_ID': 'SEASON'})
 
 df_career_stats_playoff = career_stats.get_data_frames()[2]
 df_career_stats_playoff = df_career_stats_playoff.fillna('')
-df_career_stats_playoff = df_career_stats_playoff.rename(columns={'TEAM_ABBREVIATION': 'TEAM'})
-df_career_stats_playoff = df_career_stats_playoff.rename(columns={'PLAYER_AGE': 'AGE'})
-df_career_stats_playoff = df_career_stats_playoff.rename(columns={'SEASON_ID': 'SEASON'})
+df_career_stats_playoff = df_career_stats_playoff.rename(columns={'TEAM_ABBREVIATION': 'TEAM', 'PLAYER_AGE': 'AGE', 'SEASON_ID': 'SEASON'})
 
 print(f"<div class=\"label\">Overview</div>")
 print(df_common_info[['NAME', 'COUNTRY', 'HEIGHT', 'WEIGHT', 'JERSEY', 'POSITION', 'FROM_YEAR', 'TO_YEAR']].to_html(index=False))

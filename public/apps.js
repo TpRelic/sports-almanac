@@ -22,12 +22,16 @@ document.addEventListener('DOMContentLoaded', function () {
     if (playerForm) {
         playerForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            const player = document.getElementById('playerInput').value;
-    
+
+            const searchType = document.getElementById('searchType').value;
+            const playerName = document.getElementById('playerInput').value;
+            
+            //console.log("Sending:", { player: playerName, type: searchType });
+
             fetch('/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ player: player })
+                body: JSON.stringify({ player: playerName, type: searchType })
             })
             .then(res => res.json())
             .then(data => {
@@ -51,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const searchType = document.getElementById('searchType').value;
         const teamName = document.getElementById('teamInput').value;
 
-        console.log("Sending:", { team: teamName, type: searchType });
+        //console.log("Sending:", { team: teamName, type: searchType });
   
         fetch('/search-team', {
           method: 'POST',
@@ -64,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
           })
           .catch(err => {
             console.error('Error:', err);
+            document.getElementById('result').innerText = 'An error occurred.';
           });
       });
     }
