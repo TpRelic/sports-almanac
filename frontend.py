@@ -4,6 +4,8 @@ import plotly.graph_objects as go
 import numpy as np
 import pandas as pd
 from nba_api.live.nba.endpoints import playbyplay, boxscore
+from plotly import subplots as sp
+from collections import defaultdict
 
 def analyze_scoring_play(action):
     """Analyzes if a play resulted in points and how many."""
@@ -28,6 +30,100 @@ def format_play(action, name, team_code):
     
     emoji = "🏀" if shot_result == "Made" else "❌" if shot_result == "Missed" else "🔸"
     return f"{emoji} **{action.get('actionNumber')}** | Q{action.get('period')} {action.get('clock')} — {name} ({team_code}): *{action_type}*"
+
+def track_player_stats(play, stats_dict, name, team):
+    """Track player statistics for each play."""
+    if name not in stats_dict:
+        stats_dict[name] = {
+            'team': team,
+            'name': name,
+            'points': 0,
+            'rebounds': 0,
+            'assists': 0,
+            'steals': 0,
+            'blocks': 0
+        }
+    
+    action = play.get('actionType', '').lower()
+    result = play.get('shotResult', '').lower()
+    
+    if 'rebound' in action:
+        stats_dict[name]['rebounds'] += 1
+    elif 'steal' in action:
+        stats_dict[name]['steals'] += 1
+    elif 'block' in action:
+        stats_dict[name]['blocks'] += 1
+    elif 'assist' in action:
+        stats_dict[name]['assists'] += 1
+    elif result == 'made':
+        if '3pt' in action:
+            stats_dict[name]['points'] += 3
+        elif '2pt' in action:
+            stats_dict[name]['points'] += 2
+        elif 'free throw' in action:
+            stats_dict[name]['points'] += 1
+            
+    return stats_dict
+
+def create_player_performance_charts(player_stats, away_code, home_code):
+    """Create simplified player performance visualizations."""
+    # Convert stats to DataFrame
+    stats_df = pd.DataFrame.from_dict(player_stats, orient='index')
+    if stats_df.empty:
+        return go.Figure()
+        
+    # Create subplot figure with just two charts
+    fig = sp.make_subplots(
+        rows=1, cols=2,
+        subplot_titles=(
+            'Points Scored by Player',
+            'Player Activity Heatmap'
+        ),
+        column_widths=[0.6, 0.4]
+    )
+    
+    # 1. Points by Player Bar Chart
+    fig.add_trace(
+        go.Bar(
+            x=stats_df['name'],
+            y=stats_df['points'],
+            marker_color=stats_df['team'].map({away_code: '#FF4B4B', home_code: '#1F77B4'}),
+            name='Points',
+            text=stats_df['points'],
+            textposition='outside'
+        ),
+        row=1, col=1
+    )
+    
+    # 2. Player Activity Heatmap
+    stats_for_heatmap = ['points', 'rebounds', 'assists', 'steals', 'blocks']
+    activity_matrix = stats_df[stats_for_heatmap].values
+    
+    fig.add_trace(
+        go.Heatmap(
+            z=activity_matrix,
+            x=stats_for_heatmap,
+            y=stats_df['name'],
+            colorscale='RdBu',
+            showscale=True,
+            text=activity_matrix.round(1),
+            texttemplate='%{text}',
+            textfont={"size": 10},
+            colorbar=dict(title='Value')
+        ),
+        row=1, col=2
+    )
+    
+    # Update layout
+    fig.update_layout(
+        height=400,
+        showlegend=False,
+        title_text="Player Statistics",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    return fig
 
 # Page setup
 st.set_page_config(page_title="NBA Live Play‑by‑Play", layout="wide")
@@ -85,9 +181,11 @@ if animate:
         play_area = play_col.empty()
         score_area = score_col.empty()
         debug_area = st.empty()
+        analytics_area = st.empty()
         
         # Initialize scores
         scores = {away_code: 0, home_code: 0}
+        player_stats = {}
         
         # Fetch and animate plays
         pbp = playbyplay.PlayByPlay(game_id)
@@ -117,6 +215,22 @@ if animate:
                 debug_area.text(
                     f"Score Update: {team} +{points} ({name})"
                 )
+            
+            # Update player stats and heatmap
+            if name != 'Unknown':
+                player_stats = track_player_stats(play, player_stats, name, team)
+                
+                if play.get('actionNumber', 0) % 10 == 0:
+                    analytics_key = f"analytics_{play.get('actionNumber')}_{int(time.time()*1000)}"
+                    try:
+                        analytics_fig = create_player_performance_charts(player_stats, away_code, home_code)
+                        analytics_area.plotly_chart(
+                            analytics_fig,
+                            use_container_width=True,
+                            key=analytics_key
+                        )
+                    except Exception as chart_error:
+                        st.warning(f"Could not update analytics: {str(chart_error)}")
             
             fig = go.Figure()
 
