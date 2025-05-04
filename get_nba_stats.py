@@ -3,17 +3,30 @@ from datetime import datetime
 
 class GameFinder:
     def __init__(self):
-        """Initialize GameFinder with games database."""
-        try:
-            # Load the games CSV file
-            self.games_df = pd.read_csv("Games.csv")
-            # Convert gameDate to datetime
-            self.games_df['gameDate'] = pd.to_datetime(self.games_df['gameDate'])
-            
-        except FileNotFoundError:
-            raise FileNotFoundError("Games.csv not found. Please ensure the file exists in the current directory.")
-        except Exception as e:
-            raise Exception(f"Error initializing GameFinder: {str(e)}")
+        """Initialize GameFinder with games data."""
+        # Alternative solution with explicit dtypes
+        self.games_df = pd.read_csv("Games.csv", dtype={
+            'gameId': str,
+            'gameDate': str,
+            'hometeamCity': str,
+            'hometeamName': str,
+            'hometeamId': str,
+            'awayteamCity': str,
+            'awayteamName': str,
+            'awayteamId': str,
+            'homeScore': float,
+            'awayScore': float,
+            'winner': str,
+            'gameType': str,
+            'attendance': float,
+            'arenaId': str,
+            'gameLabel': str,
+            'gameSubLabel': str,
+            'seriesGameNumber': float
+        })
+        
+        # Convert gameDate to datetime
+        self.games_df['gameDate'] = pd.to_datetime(self.games_df['gameDate'])
 
     def find_game_id(self, date_str, home_team, away_team):
         """

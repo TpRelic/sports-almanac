@@ -11,19 +11,34 @@ if OPENAI_API_KEY is None:
     sys.exit(1)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-def get_ai_response(user_input: str) -> str:
-    """Get AI response with web search capability."""
+def get_ai_response(user_input: str, game_context: dict = None) -> str:
+    """Get AI response with game context."""
     try:
-        # Create the input structure
+        # Create system message with live game context
+        system_content = {
+            "type": "input_text",
+            "text": "You are an AI assistant analyzing a live NBA game. "
+                   "Provide insights based on the current game state and player statistics."
+        }
+        
+        if game_context:
+            context = (
+                f"Current Game State:\n"
+                f"Score: {game_context['current_scores']['away']} - {game_context['current_scores']['home']}\n"
+                f"Latest Play: {game_context['current_play']}\n\n"
+                f"Player Statistics:\n"
+            )
+            
+            # Add player stats
+            for player, stats in game_context['player_stats'].items():
+                context += f"{player} ({stats['team']}): {stats['points']} pts, {stats['rebounds']} reb, {stats['assists']} ast\n"
+            
+            system_content["text"] += f"\n\nGame Context:\n{context}"
+
         input_data = [
             {
                 "role": "system",
-                "content": [
-                    {
-                        "type": "input_text",
-                        "text": "You are an AI assistant that helps analyze NBA games and stats. For YouTube URLs, extract and provide game details in this format:\nDate: MM/DD/YYYY\nTeam A: \nTeam B:"
-                    }
-                ]
+                "content": [system_content]
             },
             {
                 "role": "user",
@@ -36,7 +51,7 @@ def get_ai_response(user_input: str) -> str:
             }
         ]
 
-        # Call OpenAI API
+        # Call OpenAI API with increased tokens and temperature adjustment
         response = client.responses.create(
             model="gpt-4o-mini",
             input=input_data,
@@ -49,9 +64,9 @@ def get_ai_response(user_input: str) -> str:
                     "search_context_size": "medium"
                 }
             ],
-            temperature=1,
-            max_output_tokens=128,
-            top_p=1,
+            temperature=0.7,  # Reduced for more focused responses
+            max_output_tokens=256,  # Increased for more detailed responses
+            top_p=0.9,
             store=True
         )
 
