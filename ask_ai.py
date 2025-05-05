@@ -12,33 +12,18 @@ if OPENAI_API_KEY is None:
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 def get_ai_response(user_input: str, game_context: dict = None) -> str:
-    """Get AI response with game context."""
+    """Get AI response with web search capability."""
     try:
-        # Create system message with live game context
-        system_content = {
-            "type": "input_text",
-            "text": "You are an AI assistant analyzing a live NBA game. "
-                   "Provide insights based on the current game state and player statistics."
-        }
-        
-        if game_context:
-            context = (
-                f"Current Game State:\n"
-                f"Score: {game_context['current_scores']['away']} - {game_context['current_scores']['home']}\n"
-                f"Latest Play: {game_context['current_play']}\n\n"
-                f"Player Statistics:\n"
-            )
-            
-            # Add player stats
-            for player, stats in game_context['player_stats'].items():
-                context += f"{player} ({stats['team']}): {stats['points']} pts, {stats['rebounds']} reb, {stats['assists']} ast\n"
-            
-            system_content["text"] += f"\n\nGame Context:\n{context}"
-
+        # Create the input structure
         input_data = [
             {
                 "role": "system",
-                "content": [system_content]
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": "You are an AI assistant that helps analyze NBA games and stats."
+                    }
+                ]
             },
             {
                 "role": "user",
@@ -51,7 +36,7 @@ def get_ai_response(user_input: str, game_context: dict = None) -> str:
             }
         ]
 
-        # Call OpenAI API with increased tokens and temperature adjustment
+        # Call OpenAI API
         response = client.responses.create(
             model="gpt-4o-mini",
             input=input_data,
@@ -64,9 +49,9 @@ def get_ai_response(user_input: str, game_context: dict = None) -> str:
                     "search_context_size": "medium"
                 }
             ],
-            temperature=0.7,  # Reduced for more focused responses
-            max_output_tokens=256,  # Increased for more detailed responses
-            top_p=0.9,
+            temperature=1,
+            max_output_tokens=256,
+            top_p=1,
             store=True
         )
 
