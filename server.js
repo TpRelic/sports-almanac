@@ -6,6 +6,14 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
+const streamlitProcess = spawn('C:\\Python312\\python.exe', ['-m', 'streamlit', 'run', 'test_frontend.py', '--server.headless', 'true'], {
+    detached: true,
+    stdio: 'ignore' 
+});
+  
+streamlitProcess.unref();
+console.log('Streamlit app started in background.');
+
 app.post('/search', (req, res) => {
     const player = req.body.player;
     const type = req.body.type
@@ -64,5 +72,10 @@ app.post('/analyze', (req, res) => {
     });
 });
 
+app.get('/shutdown', (req, res) => {
+    console.log('Shutting down...');
+    streamlitProcess.kill();
+    process.exit(0);
+  });
 
 app.listen(3000, () => console.log('Server running at http://localhost:3000'));
