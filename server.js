@@ -44,5 +44,21 @@ app.post('/search-team', (req, res) => {
     });
   });
   
+app.post('/analyze', (req, res) => {
+    const htmlTables = req.body.table;
+    const py = spawn('C:\\Python312\\python.exe', ['analyze.py', htmlTables]);
+
+    //console.log("REQ BODY:", req.body);
+
+    let result = '';
+    py.stdout.on('data', data => result += data.toString());
+
+    py.stderr.on('data', data => console.error('Python error:', data.toString()));
+
+    py.on('close', () => {
+        res.json({ output: result });
+    });
+});
+
 
 app.listen(3000, () => console.log('Server running at http://localhost:3000'));

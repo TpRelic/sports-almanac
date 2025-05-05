@@ -9,10 +9,34 @@ const mobileMenu = () => {
 menu.addEventListener('click', mobileMenu);
 
 document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById("changeTextButton").addEventListener("click", function() {
-        var newText = "Here is the new AI Insight text!";
-        
+    document.getElementById("changeTextButton").addEventListener("click", function () {
+
+        const tables = document.querySelectorAll('table');
+        let allTablesHTML = '';
+
+        tables.forEach(table => {
+            allTablesHTML += table.outerHTML;
+        });
+
+        //console.log("AI_Insight, sending: ", {table: allTablesHTML})
+        var newText = "Loading...";
         document.getElementById("outputBox").value = newText;
+
+        setTimeout(() => {
+            fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ table: allTablesHTML }) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("outputBox").value = data.output;
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                document.getElementById("outputBox").value = "An error occurred.";
+            });
+        }, 0); 
     });
 }); 
 
