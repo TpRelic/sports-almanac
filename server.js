@@ -46,7 +46,11 @@ app.post('/search-team', (req, res) => {
   
 app.post('/analyze', (req, res) => {
     const htmlTables = req.body.table;
-    const py = spawn('C:\\Python312\\python.exe', ['analyze.py', htmlTables]);
+
+    const py = spawn('C:\\Python312\\python.exe', ['analyze.py']);
+
+    py.stdin.write(htmlTables);
+    py.stdin.end();
 
     //console.log("REQ BODY:", req.body);
 
