@@ -17,6 +17,8 @@
     position: sticky;
     top: 0;
     z-index: 999;
+    border-bottom: 3px solid #ca1734;
+    overflow: hidden;
 }
 
 .navbar__container {
@@ -26,9 +28,8 @@
     height: 80px;
     z-index: 1;
     width: 100%;
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 0 50px;
+    max-width: 1440px;
+    padding: 0px;
 }
 
 #navbar__logo {
@@ -43,6 +44,12 @@
     cursor: pointer;
     text-decoration: none;
     font-size: 2rem;
+}
+
+#navbar__logo i {
+    color: #ca1734;
+    background: none;
+    margin-right: 6px;
 }
 
 .navbar__menu {

@@ -14,7 +14,7 @@ def count_tokens(text, model="gpt-4"):
 OpenAI.api_key = os.getenv("OPENAI_API_KEY") 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-html = sys.argv[1]
+html = sys.stdin.read()
 
 soup = BeautifulSoup(html, 'html.parser')
 dfs = pd.read_html(StringIO(str(soup.prettify())))
@@ -29,7 +29,7 @@ client = OpenAI()
 
 response = client.responses.create(
     model="gpt-4.1",
-    instructions="Your are a NBA analyst. You will be provided a series of markdown tables and your job is to provide general trends and insight into them.",
+    instructions="Your are a NBA analyst. You will be provided a series of markdown tables and your job is to return a short paragraph giving general trends and insight into them.",
     input=tables_text,
 )
 
