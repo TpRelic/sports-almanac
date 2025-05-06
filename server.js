@@ -6,7 +6,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-var pyPath = 'C:\\Python312\\python.exe'; //Path to python exe with all packages installed
+var pyPath = 'python'; //Path to python exe with all packages installed
 
 const streamlitProcess = spawn(pyPath, ['-m', 'streamlit', 'run', 'frontend.py', '--server.headless', 'true'], {
     detached: true,
