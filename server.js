@@ -8,7 +8,7 @@ app.use(express.static('public'));
 
 var pyPath = 'C:\\Python312\\python.exe'; //Path to python exe with all packages installed
 
-const streamlitProcess = spawn(pyPath, ['-m', 'streamlit', 'run', 'test_frontend.py', '--server.headless', 'true'], {
+const streamlitProcess = spawn(pyPath, ['-m', 'streamlit', 'run', 'frontend.py', '--server.headless', 'true'], {
     detached: true,
     stdio: 'ignore' 
 });
