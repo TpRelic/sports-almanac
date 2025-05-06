@@ -28,7 +28,7 @@
     height: 80px;
     z-index: 1;
     width: 100%;
-    max-width: 1440px;
+    max-width: 1860px;
     padding: 0px;
 }
 
@@ -179,7 +179,7 @@
 }
 
 .hero__container {
-    max-width: 1500px;
+    max-width: 1860px;
     margin: 0;
     text-align: left;
     padding: 30px;
@@ -295,7 +295,7 @@ td {
     padding: 6px;
     border: none;
     box-sizing: border-box;
-    width: 1476px;
+    width: 1860px;
     height: 200px;
     font-size: 17px;
     border-radius: 4px;
