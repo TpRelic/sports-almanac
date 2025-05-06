@@ -20,6 +20,10 @@ if 'player_stats' not in st.session_state:
     st.session_state.player_stats = {}
 if 'scores' not in st.session_state:
     st.session_state.scores = {}
+if 'current_play_index' not in st.session_state:
+    st.session_state.current_play_index = 0
+if 'plays' not in st.session_state:
+    st.session_state.plays = []
 
 def clear_chat():
     st.session_state.chat_history = []
@@ -84,60 +88,105 @@ def track_player_stats(play, stats_dict, name, team):
 
 def create_player_performance_charts(player_stats, away_code, home_code):
     """Create simplified player performance visualizations."""
-    # Convert stats to DataFrame
+    # Convert stats to DataFrame and sort by points
     stats_df = pd.DataFrame.from_dict(player_stats, orient='index')
     if stats_df.empty:
         return go.Figure()
-        
-    # Create subplot figure with just two charts
+    
+    # Sort by points and add team color coding
+    stats_df = stats_df.sort_values('points', ascending=False)
+    stats_df['color'] = stats_df['team'].map({
+        away_code: '#FF4B4B',
+        home_code: '#1F77B4'
+    })
+    
+    # Create subplot figure with adjusted dimensions
     fig = sp.make_subplots(
         rows=1, cols=2,
         subplot_titles=(
-            'Points Scored by Player',
-            'Player Activity Heatmap'
+            '<b>Points by Player</b>',
+            '<b>Player Performance Heatmap</b>'
         ),
-        column_widths=[0.6, 0.4]
+        column_widths=[0.5, 0.5],
+        horizontal_spacing=0.15  # Increased spacing between subplots
     )
     
-    # 1. Points by Player Bar Chart
+    # 1. Points by Player Bar Chart (Vertical)
     fig.add_trace(
         go.Bar(
             x=stats_df['name'],
             y=stats_df['points'],
-            marker_color=stats_df['team'].map({away_code: '#FF4B4B', home_code: '#1F77B4'}),
-            name='Points',
+            marker_color=stats_df['color'],
             text=stats_df['points'],
-            textposition='outside'
+            textposition='outside',
+            textfont=dict(size=12),
+            hovertemplate="<b>%{x}</b><br>" +
+                         "Points: %{y}<br>" +
+                         "<extra></extra>"
         ),
         row=1, col=1
     )
     
     # 2. Player Activity Heatmap
-    stats_for_heatmap = ['points', 'rebounds', 'assists', 'steals', 'blocks']
+    stats_for_heatmap = ['points', 'rebounds', 'steals', 'blocks']
     activity_matrix = stats_df[stats_for_heatmap].values
     
     fig.add_trace(
         go.Heatmap(
             z=activity_matrix,
-            x=stats_for_heatmap,
+            x=[stat.capitalize() for stat in stats_for_heatmap],
             y=stats_df['name'],
             colorscale='RdBu',
             showscale=True,
             text=activity_matrix.round(1),
             texttemplate='%{text}',
-            textfont={"size": 10},
-            colorbar=dict(title='Value')
+            textfont={"size": 12},
+            colorbar=dict(
+                title='Value',
+                thickness=15,
+                len=0.9,
+                x=1.02
+            ),
+            hovertemplate="<b>%{y}</b><br>" +
+                         "%{x}: %{z}<br>" +
+                         "<extra></extra>"
         ),
         row=1, col=2
     )
     
-    # Update layout
+    # Update layout for better readability
     fig.update_layout(
-        height=400,
+        height=max(400, len(stats_df) * 30),
         showlegend=False,
         title_text="Player Statistics",
+        title_x=0.5,
         paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)'
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=50, r=50, t=50, b=100)  # Increased bottom margin for player names
+    )
+    
+    # Update axes for vertical bar chart
+    fig.update_xaxes(
+        title_text="",
+        row=1, col=1,
+        tickangle=45,  # Angle player names for better readability
+        tickfont=dict(size=10)
+    )
+    fig.update_yaxes(
+        title_text="Points Scored",
+        row=1, col=1,
+        gridcolor='rgba(128, 128, 128, 0.2)',
+        title_font=dict(size=12),
+        tickfont=dict(size=10),
+        autorange=True  # Allow dynamic range based on max score
+    )
+    
+    # Update heatmap axes
+    fig.update_yaxes(
+        title_text="",
+        row=1, col=2,
+        tickfont=dict(size=12),
+        autorange="reversed"  # Keep player order consistent
     )
     
     return fig
@@ -239,6 +288,9 @@ with chat_container:
             )
 
 # Main game animation section
+if animate:
+    st.session_state.play_index = 0  # Restart if manually triggered
+
 if animate and game_id:
     try:
         # Fetch game data
@@ -294,8 +346,13 @@ if animate and game_id:
         # Fetch and animate plays
         pbp = playbyplay.PlayByPlay(game_id)
         plays = pbp.get_dict().get('game', {}).get('actions', [])
-        
-        for play in plays:
+                # Fetch and store plays
+        st.session_state.plays = plays  # <- Save to session_state
+
+        for i in range(st.session_state.play_index, len(plays)):
+            play = plays[i]
+            st.session_state.play_index = i + 1
+
             # Get player info
             pid = str(play.get('personId', ''))
             team = player_team_map.get(pid, '')
