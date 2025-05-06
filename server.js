@@ -6,6 +6,16 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
+var pyPath = 'C:\\Python312\\python.exe'; //Path to python exe with all packages installed
+
+const streamlitProcess = spawn(pyPath, ['-m', 'streamlit', 'run', 'frontend.py', '--server.headless', 'true'], {
+    detached: true,
+    stdio: 'ignore' 
+});
+  
+streamlitProcess.unref();
+console.log('Streamlit app started in background.');
+
 app.post('/search', (req, res) => {
     const player = req.body.player;
     const type = req.body.type
@@ -13,7 +23,7 @@ app.post('/search', (req, res) => {
     //console.log("REQ BODY:", req.body);
     //console.log(`Running script with args: ${player}, ${type}`);
 
-    const py = spawn('C:\\Python312\\python.exe', ['player_script.py', player, type]);
+    const py = spawn(pyPath, ['player_script.py', player, type]);
 
     let output = '';
     py.stdout.on('data', data => output += data.toString());
@@ -32,7 +42,7 @@ app.post('/search-team', (req, res) => {
     //console.log("REQ BODY:", req.body);
     //console.log(`Running script with args: ${team}, ${type}`);
 
-    const py = spawn('C:\\Python312\\python.exe', ['team_script.py', team, type]);
+    const py = spawn(pyPath, ['team_script.py', team, type]);
   
     let output = '';
     py.stdout.on('data', data => { output += data.toString(); });
@@ -47,7 +57,7 @@ app.post('/search-team', (req, res) => {
 app.post('/analyze', (req, res) => {
     const htmlTables = req.body.table;
 
-    const py = spawn('C:\\Python312\\python.exe', ['analyze.py']);
+    const py = spawn(pyPath, ['analyze.py']);
 
     py.stdin.write(htmlTables);
     py.stdin.end();
@@ -64,5 +74,10 @@ app.post('/analyze', (req, res) => {
     });
 });
 
+app.get('/shutdown', (req, res) => {
+    console.log('Shutting down...');
+    streamlitProcess.kill();
+    process.exit(0);
+  });
 
 app.listen(3000, () => console.log('Server running at http://localhost:3000'));

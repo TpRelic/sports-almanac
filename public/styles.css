@@ -3,12 +3,12 @@
     margin: 0;
     padding: 0;
     font-family: 'Kumbh Sans', sans-serif;
-    background: #000000;
+    background: #0e1118;
     scroll-behavior: smooth;
 }
 
 .navbar {
-    background: #131313;
+    background: #272731;
     height: 80px;
     display: flex;
     justify-content: center;
@@ -22,7 +22,7 @@
 }
 
 .navbar__container {
-    background: #131313;
+    background: #272731;
     display: flex;
     justify-content: space-between;
     height: 80px;
@@ -63,7 +63,7 @@
 }
 
 .navbar__links {
-    background: #131313;
+    background: #272731;
     color: #fff;
     display: flex;
     align-items: center;
@@ -174,7 +174,7 @@
 }
 
 .hero {
-    background: #000000;
+    background: #0e1118;
     padding: 30px 0;
 }
 

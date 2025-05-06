@@ -2,14 +2,9 @@ import sys
 import os
 import pandas as pd
 import io
-import tiktoken
 from openai import OpenAI
 from io import StringIO
 from bs4 import BeautifulSoup
-
-def count_tokens(text, model="gpt-4"):
-    encoding = tiktoken.encoding_for_model(model)
-    return len(encoding.encode(text))
 
 OpenAI.api_key = os.getenv("OPENAI_API_KEY") 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
