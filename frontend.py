@@ -214,7 +214,7 @@ else:
 
 # Animation controls
 animate = st.sidebar.button("Start Animation")
-speed = st.sidebar.slider("Animation Speed (seconds)", 0.05, 2.0, 0.05)
+speed = st.sidebar.slider("Animation Speed (seconds)", 0.01, 2.0, 0.01)
 
 # Add chat interface in sidebar
 chat_container = st.sidebar.container()
